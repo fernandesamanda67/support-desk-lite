@@ -82,7 +82,7 @@ class Ticket extends Model
      */
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class);
+        return $this->belongsToMany(Tag::class, 'ticket_tag');
     }
 }
 
