@@ -36,5 +36,6 @@ Route::patch('/tickets/{ticket}', [TicketController::class, 'update']);
 Route::post('/tickets/{ticket}/updates', [TicketUpdateController::class, 'store']);
 
 // Tags
-Route::post('/tickets/{ticket}/tags', [TagController::class, 'update']);
+Route::put('/tickets/{ticket}/tags/{tag}', [TagController::class, 'attach']);
+Route::delete('/tickets/{ticket}/tags/{tag}', [TagController::class, 'detach']);
 

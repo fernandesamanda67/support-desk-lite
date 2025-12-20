@@ -8,8 +8,7 @@ use App\Http\Resources\TicketUpdateResource;
 use App\Models\Ticket;
 use App\Services\TicketService;
 use Illuminate\Http\JsonResponse;
-use App\Models\User;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\AuthenticationException;
 
 class TicketUpdateController extends Controller
 {
@@ -23,23 +22,10 @@ class TicketUpdateController extends Controller
      */
     public function store(StoreTicketUpdateRequest $request, Ticket $ticket): JsonResponse
     {
-        // Authorization: if user exists, check policy
-        if ($request->user()) {
-            Gate::authorize('view', $ticket);
-        }
-
-        // Get user: from request or create a default one for testing
         $user = $request->user();
 
         if (!$user) {
-            // For testing without auth, create or get first user
-            $user = User::first();
-            if (!$user) {
-                $user = User::factory()->create([
-                    'name' => 'System User',
-                    'email' => 'system@example.com',
-                ]);
-            }
+            throw new AuthenticationException('User must be authenticated to create ticket updates.');
         }
 
         $update = $this->ticketService->addUpdate(

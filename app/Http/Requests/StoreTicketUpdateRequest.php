@@ -15,9 +15,15 @@ class StoreTicketUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // If user is authenticated, check policy
+        // If user is authenticated, check policies
         if ($this->user()) {
-            return $this->user()->can('create', TicketUpdate::class);
+            // Check if user can create ticket updates
+            $canCreate = $this->user()->can('create', TicketUpdate::class);
+
+            // Also check if user can view the ticket (required to add updates)
+            $canViewTicket = $this->user()->can('view', $this->route('ticket'));
+
+            return $canCreate && $canViewTicket;
         }
 
         // If no user, assume authorized (for testing without auth)

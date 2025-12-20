@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\TicketUpdateType;
 use App\Exceptions\InvalidTicketOperationException;
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\DB;
 
 class TicketService
 {
+
+    private const MAX_PER_PAGE = 100;
+    private const MAX_SEARCH_LENGTH = 255;
     /**
      * Create a new ticket.
      *
@@ -173,6 +177,108 @@ class TicketService
         }
 
         $ticket->tags()->detach($tagId);
+    }
+
+    /**
+     * Get tickets with filters, search, and sorting.
+     *
+     * Security and best practices:
+     * - Validates enum values (defense in depth)
+     * - Validates and limits perPage to prevent DoS
+     * - Validates sort_order to prevent SQL injection
+     * - Sanitizes search input (length limit)
+     * - Type-safe ID filtering
+     * - Correct tag filtering logic (numeric vs string)
+     *
+     * @param array<string, mixed> $filters
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function listTickets(array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        // Validate and limit perPage to prevent DoS attacks
+        $perPage = max(1, min(self::MAX_PER_PAGE, $perPage));
+
+        $query = Ticket::query()
+            ->with(['customer', 'assignedUser', 'tags']);
+
+        // Apply filters with validation
+        if (isset($filters['status'])) {
+            // Validate enum value (defense in depth)
+            $statusValue = is_string($filters['status']) ? $filters['status'] : null;
+            if ($statusValue && TicketStatus::tryFrom($statusValue)) {
+                $query->where('status', $statusValue);
+            }
+        }
+
+        if (isset($filters['priority'])) {
+            // Validate enum value (defense in depth)
+            $priorityValue = is_string($filters['priority']) ? $filters['priority'] : null;
+            if ($priorityValue && TicketPriority::tryFrom($priorityValue)) {
+                $query->where('priority', $priorityValue);
+            }
+        }
+
+        if (isset($filters['customer_id'])) {
+            // Type-safe ID filtering
+            $customerId = filter_var($filters['customer_id'], FILTER_VALIDATE_INT);
+            if ($customerId !== false && $customerId > 0) {
+                $query->where('customer_id', $customerId);
+            }
+        }
+
+        if (isset($filters['assigned_user_id'])) {
+            // Type-safe ID filtering
+            $userId = filter_var($filters['assigned_user_id'], FILTER_VALIDATE_INT);
+            if ($userId !== false && $userId > 0) {
+                $query->where('assigned_user_id', $userId);
+            }
+        }
+
+        // Filter by tag
+        if (isset($filters['tag'])) {
+            $tagFilter = $filters['tag'];
+            $query->whereHas('tags', function ($q) use ($tagFilter) {
+                // If numeric, treat as ID; otherwise, treat as name
+                if (is_numeric($tagFilter)) {
+                    $q->where('tags.id', (int) $tagFilter);
+                } else {
+                    $q->where('tags.name', $tagFilter);
+                }
+            });
+        }
+
+        // Apply search with sanitization
+        if (isset($filters['search']) && is_string($filters['search'])) {
+            $search = trim($filters['search']);
+            // Limit search length to prevent DoS
+            if (strlen($search) > 0 && strlen($search) <= self::MAX_SEARCH_LENGTH) {
+                // Laravel escapes LIKE automatically, but we ensure it's a string
+                $query->where(function ($q) use ($search) {
+                    $q->where('subject', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+        }
+
+        // Apply sorting with validation
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $allowedSortFields = ['created_at', 'priority', 'status'];
+        $allowedSortOrders = ['asc', 'desc'];
+
+        // Validate sort_order to prevent SQL injection
+        if (!in_array(strtolower($sortOrder), $allowedSortOrders, true)) {
+            $sortOrder = 'desc';
+        }
+
+        if (in_array($sortBy, $allowedSortFields, true)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        return $query->paginate($perPage);
     }
 }
 

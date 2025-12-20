@@ -1,0 +1,690 @@
+{
+	"info": {
+		"_postman_id": "support-desk-lite-api",
+		"name": "Support Desk Lite API",
+		"description": "Complete API collection for Support Desk Lite - Laravel 12 & PHP 8.4\n\n## Setup\n1. Import this collection into Postman\n2. Set the `base_url` variable (default: http://localhost:8000)\n3. Run migrations: `php artisan migrate`\n4. **Seed database**: `php artisan db:seed` (creates sample tags and user)\n5. Start the Laravel server: `php artisan serve`\n6. Run requests in order (create customer first, then ticket, etc.)\n\n## Authentication\nAll requests assume authentication. For testing, you can use Postman without auth tokens.\n\n## Tags\nTags are created by the seeder. If you haven't run `php artisan db:seed`, create tags first:\n- Run `php artisan db:seed --class=TagSeeder`\n- Or create tags manually via Tinker\n\n## Notes\n- All endpoints return JSON\n- Use `Accept: application/json` header\n- Replace `{{ticket_id}}`, `{{customer_id}}`, `{{tag_id}}` with actual IDs from responses\n- Default tags created by seeder: urgent, bug, feature, question, support",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Create Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"external_reference\": \"EXT-12345\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/customers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"customers"
+							]
+						},
+						"description": "Create a new customer. Email must be unique. External reference is optional but must be unique if provided."
+					},
+					"response": []
+				}
+			],
+			"description": "Customer management endpoints"
+		},
+		{
+			"name": "Tickets",
+			"item": [
+				{
+					"name": "Create Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"subject\": \"Unable to login to account\",\n    \"description\": \"Customer reports being unable to login despite using correct credentials. Error message appears after 3 attempts.\",\n    \"status\": \"open\",\n    \"priority\": \"high\",\n    \"assigned_user_id\": null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							]
+						},
+						"description": "Create a new ticket.\n\n**Required fields:**\n- customer_id (must exist)\n- subject\n- description\n- status: open | in_progress | resolved | closed\n- priority: low | medium | high | urgent\n\n**Optional fields:**\n- assigned_user_id (must exist if provided)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (All)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							]
+						},
+						"description": "List all tickets with pagination (default: 15 per page)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Filtered by Status)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?status=open",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filter by status: open | in_progress | resolved | closed"
+								}
+							]
+						},
+						"description": "Filter tickets by status"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Filtered by Priority)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?priority=high",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "priority",
+									"value": "high",
+									"description": "Filter by priority: low | medium | high | urgent"
+								}
+							]
+						},
+						"description": "Filter tickets by priority"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Filtered by Tag)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?tag=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "tag",
+									"value": "1",
+									"description": "Filter by tag ID or name"
+								}
+							]
+						},
+						"description": "Filter tickets by tag (ID or name)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Search)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?search=login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "login",
+									"description": "Search in subject and description fields"
+								}
+							]
+						},
+						"description": "Search tickets by subject and description"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Sorted)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?sort_by=priority&sort_order=desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "sort_by",
+									"value": "priority",
+									"description": "Sort field: created_at | priority | status"
+								},
+								{
+									"key": "sort_order",
+									"value": "desc",
+									"description": "Sort direction: asc | desc"
+								}
+							]
+						},
+						"description": "List tickets with sorting"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Pagination)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?per_page=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "10",
+									"description": "Number of items per page (default: 15)"
+								}
+							]
+						},
+						"description": "List tickets with custom pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "List Tickets (Multiple Filters)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?status=open&priority=high&customer_id=1&per_page=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "open"
+								},
+								{
+									"key": "priority",
+									"value": "high"
+								},
+								{
+									"key": "customer_id",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Example with multiple filters combined"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Ticket Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}"
+							]
+						},
+						"description": "Get detailed information about a specific ticket, including customer, assigned user, tags, and updates."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Ticket (Partial)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"resolved\",\n    \"priority\": \"medium\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}"
+							]
+						},
+						"description": "Update a ticket. All fields are optional (partial update).\n\n**Business Rule**: When status changes to `resolved`, `resolved_at` is automatically set.\n\n**Updatable fields:**\n- subject\n- description\n- priority: low | medium | high | urgent\n- status: open | in_progress | resolved | closed\n- assigned_user_id (set to null to unassign)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Ticket (Resolve)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"resolved\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}"
+							]
+						},
+						"description": "Resolve a ticket. This will automatically set `resolved_at` timestamp."
+					},
+					"response": []
+				}
+			],
+			"description": "Ticket management endpoints with filtering, search, sorting, and pagination"
+		},
+		{
+			"name": "Ticket Updates",
+			"item": [
+				{
+					"name": "Add Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Thank you for the update. We are investigating the issue.\",\n    \"type\": \"comment\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}/updates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}",
+								"updates"
+							]
+						},
+						"description": "Add a comment to a ticket.\n\n**Business Rule**: If ticket is `resolved` or `closed` and receives a comment, it will automatically reopen to `open` status.\n\n**Type options:**\n- comment\n- internal_note\n- status_change"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Internal Note",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Customer has been contacted via phone. Issue escalated to technical team.\",\n    \"type\": \"internal_note\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}/updates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}",
+								"updates"
+							]
+						},
+						"description": "Add an internal note to a ticket. Internal notes are only visible to authenticated users (internal agents)."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Status Change",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Ticket moved to in_progress status. Assigned to technical team.\",\n    \"type\": \"status_change\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}/updates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}",
+								"updates"
+							]
+						},
+						"description": "Add a status change update to a ticket."
+					},
+					"response": []
+				}
+			],
+			"description": "Ticket update endpoints for comments, internal notes, and status changes"
+		},
+		{
+			"name": "Tags",
+			"item": [
+				{
+					"name": "Attach Tag to Ticket",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}/tags/{{tag_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}",
+								"tags",
+								"{{tag_id}}"
+							]
+						},
+						"description": "Attach a tag to a ticket. Returns error if tag is already attached.\n\n**Note**: Tag must exist. Use tag ID in the URL path.\n\n**To create tags**: Run `php artisan db:seed` or `php artisan db:seed --class=TagSeeder`"
+					},
+					"response": []
+				},
+				{
+					"name": "Detach Tag from Ticket",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets/{{ticket_id}}/tags/{{tag_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"{{ticket_id}}",
+								"tags",
+								"{{tag_id}}"
+							]
+						},
+						"description": "Detach a tag from a ticket. Returns error if tag is not attached.\n\n**Note**: Use tag ID in the URL path.\n\n**To create tags**: Run `php artisan db:seed` or `php artisan db:seed --class=TagSeeder`"
+					},
+					"response": []
+				}
+			],
+			"description": "Tag management endpoints.\n\n**Important**: Tags must be created first. Run `php artisan db:seed` to create sample tags (urgent, bug, feature, question, support).\n\nAlternatively, create tags via:\n- `php artisan db:seed --class=TagSeeder`\n- Laravel Tinker: `Tag::create(['name' => 'urgent', 'colour' => '#ff0000'])`"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "ticket_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "customer_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "tag_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
+
